@@ -1,0 +1,87 @@
+﻿@{
+    ViewBag.Title = "Home Page";
+}
+<link rel="icon" sizes="192x192" href="~/images/app-icon-192.png">
+<link rel="icon" sizes="128x128" href="~/images/app-icon-128.png">
+<link rel="apple-touch-icon" sizes="128x128" href="images/app-icon-128.png">
+<link rel="apple-touch-icon-precomposed" sizes="128x128" href="images/app-icon-128.png">
+
+<script src="~/Scripts/Polymer/webcomponentsjs/webcomponents.js"></script>
+<link rel="import" href="~/Scripts/Polymer/polymer/polymer.html" />
+
+@*Polymer imports for elements*@
+<link rel="import" href="~/Scripts/Polymer/core-scaffold/core-scaffold.html" />
+<link rel="import" href="~/Scripts/Polymer/core-item/core-item.html" />
+<link rel="import" href="~/Scripts/Polymer/paper-input/paper-input.html" />
+<link rel="import" href="~/Scripts/Polymer/paper-fab/paper-fab.html" />
+<link rel="stylesheet" href="~/css/style.css">
+
+@* Importing my own custom element *@
+<link rel="import" href="x-chat-list.html">
+
+@* Importing app script *@
+<script src="~/Scripts/app.js"></script>
+
+@* Import PubNub element *@
+<link rel="import" href="~/Scripts/Polymer/pubnub-polymer/pubnub-element.html" />
+
+@* Initialize core-pubnub *@
+<core-pubnub publish_key="pub-c-f09122e8-0e8f-4254-9860-5d9ee9d249bf" subscribe_key="sub-c-537841e4-0710-11e6-996b-0619f8945a4f" uuid="{{uuid}}">
+    <core-pubnub-subscribe channel="polymer-chat" id="sub" on-callback="{{subscribeCallback}}" on-presence="{{presenceChanged}}" on-error="{{error}}">
+        <core-pubnub-publish channel="polymer-chat" message="" id="pub" on-error="{{error}}"></core-pubnub-publish>
+        <core-pubnub-history channel="polymer-chat" count="30" on-success="{{historyRetrieved}}" on-error="{{error}}"></core-pubnub-history>
+    </core-pubnub-subscribe>
+</core-pubnub>
+
+<template is="auto-binding">
+    @* For 2-way binding... similar to injecting ng-app/ng-controller in AngularJS and we can use expessions to display bound data  *@
+    <core-scaffold>
+
+        <!-- Drawer panel -->
+        <core-header-panel navigation flex>
+            <core-toolbar class="tall">
+                @* Avatar and UserName *@
+                <div class="middle avatar {{color}}" style="background-image: url({{avatar}})"></div>
+                <div class="bottom uuid">{{uuid}}</div>
+            </core-toolbar>
+
+            <section layout vertical id="onlineList">
+                <core-item label="Online Now" class="subdue" layout horizontal center></core-item>
+                <template repeat="{{chatter in chatters}}">
+                    <core-item label="{{chatter}}"></core-item>
+                </template>
+            </section>
+
+        </core-header-panel>
+
+        <!-- App Title -->
+        <div tool layout horizontal flex>
+            <span flex>Help Desk Chat</span>
+            <core-icon icon="account-circle"></core-icon>
+            <span>{{occupancy}}</span>
+        </div>
+
+        <!-- Main content -->
+        <section layout vertical fit id="chat">
+            <div flex>
+                <div flex class="chat-list">
+                    <template repeat="{{message in messageList}}">
+                        <x-chat-list color="{{message.color}}" avatar="{{message.avatar}}" username="{{message.uuid}}" text="{{message.text}}" status="{{message.status}}" timestamp="{{message.timestamp}}"></x-chat-list>
+                    </template>
+
+                    <core-pubnub-subscribe channel="polymer-chat"
+                                           id="sub"
+                                           messages="{{messages}}"
+                                           on-callback="{{subscribeCallback}}">
+                </div>
+                
+            </div>
+            <div class="shim"></div>
+
+            <div class="send-message" layout horizontal>
+                <paper-input flex label="Type message..." id="input" value="{{input}}" on-keyup="{{checkKey}}"></paper-input>
+                <paper-fab icon="send" id="sendButton" on-tap="{{sendMyMessage}}"></paper-fab>
+            </div>
+        </section>
+    </core-scaffold>
+</template>
